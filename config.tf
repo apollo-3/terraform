@@ -1,14 +1,11 @@
 variable "vpc_cidr" {
-  default = "192.168.0.0/24"
+ default = "192.168.0.0/24"
 }
 variable "subnet_cidr" {
-  default = "192.168.0.1/25"
+  default = "192.168.0.0/25"
 }
 variable "sg_cidr" {
   default = "185.63.117.3/32"
-}
-variable "sg_protocol" {
-  default = "TCP"
 }
 variable "sg_port_1" {
   default = 22
@@ -16,12 +13,28 @@ variable "sg_port_1" {
 variable "sg_port_2" {
   default = 80
 }
-variable "instance_ami"{
+variable "instance_ami" {
   default = "ami-031b0f67"
 }
-variable "instance_type"{
-  default = "t2.micro"
+variable "instance_type" {
+  default = "t2.small"
 }
-variable "instance_keypair"{
+variable "instance_keypair" {
   default = "research"
+}
+
+variable "tag_AssetProtectionLevel" {
+  default = "99"
+}
+variable "tag_Brand" {
+  default = "FCTS"
+}
+variable "tag_CostCenter" {
+  default = "90326"
+}
+variable "tag_Team" {
+  default = "FCTS Operations"
+}
+variable "tag_Creator" {
+  default = "NA"
 }
