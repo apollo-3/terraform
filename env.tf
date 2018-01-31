@@ -63,14 +63,8 @@ resource "aws_security_group" "test-sg" {
     cidr_blocks = ["${var.sg_cidr}"]
   }
   ingress {
-    from_port   = "${var.sg_port_3}"
-    to_port     = "${var.sg_port_3}"
-    protocol    = "TCP"
-    cidr_blocks = ["${var.sg_cidr}"]
-  }
-  ingress {
-    from_port   = "${var.sg_port_3}"
-    to_port     = "${var.sg_port_3}"
+    from_port   = "0"
+    to_port     = "65535"
     protocol    = "TCP"
     cidr_blocks = ["${var.vpc_cidr}"]
   }

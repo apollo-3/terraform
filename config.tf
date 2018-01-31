@@ -11,9 +11,6 @@ variable "sg_port_1" {
   default = 22
 }
 variable "sg_port_2" {
-  default = 80
-}
-variable "sg_port_3" {
   default = 443
 }
 variable "instance_ami" {
