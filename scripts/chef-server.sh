@@ -10,8 +10,8 @@ USER_KEY="/root/admin.pem"
 PASSWORD="admin1"
 
 ORG="myorg"
-ORG_NAME="My organization"
-VALIDATE_KEY="/root/validate.pem"
+ORG_NAME="My Organization"
+VALIDATE_KEY="/root/validator.pem"
 
 yum install wget -y
 wget "$LINK" -O "$WORK_DIR/chef.rpm"

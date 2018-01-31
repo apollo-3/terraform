@@ -62,6 +62,18 @@ resource "aws_security_group" "test-sg" {
     protocol    = "TCP"
     cidr_blocks = ["${var.sg_cidr}"]
   }
+  ingress {
+    from_port   = "${var.sg_port_3}"
+    to_port     = "${var.sg_port_3}"
+    protocol    = "TCP"
+    cidr_blocks = ["${var.sg_cidr}"]
+  }
+  ingress {
+    from_port   = "${var.sg_port_3}"
+    to_port     = "${var.sg_port_3}"
+    protocol    = "TCP"
+    cidr_blocks = ["${var.vpc_cidr}"]
+  }
   egress {
     from_port   = "0"
     to_port     = "0"
@@ -93,12 +105,12 @@ resource "aws_instance" "test-instance" {
   connection {
     type        = "ssh"
     host        = "${aws_instance.test-instance.public_ip}"
-    user        = "centos"
-    private_key = "${file("research.pem")}"
+    user        = "${var.ssh_user}"
+    private_key = "${file("${var.instance_keypair}.pem")}"
   }
   provisioner "file" {
-    source      = "scripts/chef-server.sh"
-    destination = "/tmp/chef-server.sh"
+    source      = "${var.chef-server-script}"
+    destination = "${var.chef-server-script-dest}"
   }
   provisioner "remote-exec" {
     inline = [
@@ -106,4 +118,24 @@ resource "aws_instance" "test-instance" {
       "sudo /tmp/chef-server.sh"
     ]
   }
+}
+
+resource "aws_instance" "test-instance-client" {
+  ami                         = "${var.instance_ami}"
+  count                       = 1
+  instance_type               = "t2.micro"
+  key_name                    = "${var.instance_keypair}"
+  subnet_id                   = "${aws_subnet.test-subnet.id}"
+  associate_public_ip_address = true
+  vpc_security_group_ids      = ["${aws_security_group.test-sg.id}"]
+  tags {
+    Name                 = "test-instance-client"
+    Application          = "chef-client"
+    AssetProtectionLevel = "${var.tag_AssetProtectionLevel}"
+    Brand                = "${var.tag_Brand}"
+    CostCenter           = "${var.tag_CostCenter}"
+    Team                 = "${var.tag_Team}"
+    Creator              = "${var.tag_Creator}"
+  }
+  depends_on = ["aws_security_group.test-sg"]
 }
