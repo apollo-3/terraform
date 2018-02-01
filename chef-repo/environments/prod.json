@@ -1,0 +1,11 @@
+{
+  "name": "prod",
+  "default_attributes": {
+  },
+  "json_class": "Chef::Environment",
+  "description": "Production environment",
+  "cookbook_versions": {
+    "mysql": "= 8.5.1"
+  },
+  "chef_type": "environment"
+}

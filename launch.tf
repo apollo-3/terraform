@@ -1,3 +1,24 @@
+variable access_key {}
+variable secret_key {}
+variable region {}
+
+variable "vpc_cidr" {}
+variable "subnet_cidr" {}
+variable "sg_cidr" {}
+variable "sg_port_1" {}
+variable "sg_port_2" {}
+variable "instance_ami" {}
+variable "instance_type" {}
+variable "instance_keypair" {}
+variable "tag_AssetProtectionLevel" {}
+variable "tag_Brand" {}
+variable "tag_CostCenter" {}
+variable "tag_Team" {}
+variable "tag_Creator" {}
+variable "ssh_user" {}
+variable "chef-server-script" {}
+variable "chef-server-script-dest" {}
+
 provider "aws" {
   access_key = "${var.access_key}"
   secret_key = "${var.secret_key}"
@@ -77,7 +98,7 @@ resource "aws_security_group" "test-sg" {
   depends_on = ["aws_vpc.test-vpc"]
 }
 
-resource "aws_instance" "test-instance" {
+resource "aws_instance" "test-chef-server" {
   ami                         = "${var.instance_ami}"
   count                       = 1
   instance_type               = "${var.instance_type}"
@@ -86,8 +107,8 @@ resource "aws_instance" "test-instance" {
   associate_public_ip_address = true
   vpc_security_group_ids      = ["${aws_security_group.test-sg.id}"]
   tags {
-    Name                 = "test-instance"
-    Application          = "chef"
+    Name                 = "test-chef-server"
+    Application          = "chef-server"
     AssetProtectionLevel = "${var.tag_AssetProtectionLevel}"
     Brand                = "${var.tag_Brand}"
     CostCenter           = "${var.tag_CostCenter}"
@@ -98,7 +119,7 @@ resource "aws_instance" "test-instance" {
 
   connection {
     type        = "ssh"
-    host        = "${aws_instance.test-instance.public_ip}"
+    host        = "${aws_instance.test-chef-server.public_ip}"
     user        = "${var.ssh_user}"
     private_key = "${file("${var.instance_keypair}.pem")}"
   }
@@ -108,13 +129,13 @@ resource "aws_instance" "test-instance" {
   }
   provisioner "remote-exec" {
     inline = [
-      "chmod 755 /tmp/chef-server.sh",
-      "sudo /tmp/chef-server.sh"
+      "chmod 755 ${var.chef-server-script-dest}",
+      "sudo ${var.chef-server-script-dest}"
     ]
   }
 }
 
-resource "aws_instance" "test-instance-client" {
+resource "aws_instance" "test-db" {
   ami                         = "${var.instance_ami}"
   count                       = 1
   instance_type               = "t2.micro"
@@ -123,7 +144,7 @@ resource "aws_instance" "test-instance-client" {
   associate_public_ip_address = true
   vpc_security_group_ids      = ["${aws_security_group.test-sg.id}"]
   tags {
-    Name                 = "test-instance-client"
+    Name                 = "test-db"
     Application          = "chef-client"
     AssetProtectionLevel = "${var.tag_AssetProtectionLevel}"
     Brand                = "${var.tag_Brand}"
@@ -132,4 +153,11 @@ resource "aws_instance" "test-instance-client" {
     Creator              = "${var.tag_Creator}"
   }
   depends_on = ["aws_security_group.test-sg"]
+}
+
+output "chef-server-ip" {
+  value = "${aws_instance.test-chef-server.public_ip}"
+}
+output "chef-server-private-dns" {
+  value = "${aws_instance.test-chef-server.private_dns}"
 }

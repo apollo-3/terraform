@@ -1,0 +1,18 @@
+{
+  "name": "db",
+  "chef_type": "role",
+  "json_class": "Chef::Role",
+  "default_attributes": {
+  },
+  "description": "The role for a database",
+  "run_list": [
+  ],
+  "env_run_lists" : {
+    "prod" : [],
+    "dev": [
+      "recipe[my_db::default]"
+    ]
+  },
+  "override_attributes": {
+  }
+}

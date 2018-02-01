@@ -1,6 +1,32 @@
-creds.tf
+config/secret.tfvars
 research.pem
+Gemfile.lock
 .terraform.tfstate.lock.info
 terraform.tfstate
 terraform.tfstate.backup
 .terraform
+
+chef-repo/.vagrant
+chef-repo/*~
+chef-repo/*#
+chef-repo/.#*
+chef-repo/\#*#
+chef-repo/.*.sw[a-z]
+chef-repo/*.un~
+
+# Bundler
+chef-repo/Gemfile.lock
+chef-repo/gems.locked
+chef-repo/bin/*
+chef-repo/.bundle/*
+
+# test kitchen
+chef-repo/.kitchen/
+chef-repo/.kitchen.local.yml
+
+# Chef
+chef-repo/Berksfile.lock
+chef-repo/.zero-knife.rb
+chef-repo/Policyfile.lock.json
+chef-repo/.chef/*.pem
+chef-repo/.chef/trusted_certs
