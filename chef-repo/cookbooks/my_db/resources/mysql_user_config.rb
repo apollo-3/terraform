@@ -8,22 +8,14 @@ end
 
 action :match do
   password = node['mysql']['root_pwd']
-  
-  ruby_block "something" do
-    block do
-      node['mysql']['change_host'] = exec("echo \"SELECT count(*) from mysql.user where host='#{allowed_host}';\" | " \
-                                          "mysql -h 127.0.0.1 -u root --password=\"#{password}\" | grep -v count")  
-    end
+  allowed_host = new_resource.allowed_host
+
+  execute "something" do
+    command "echo \"GRANT ALL PRIVILEGES ON *.* TO root@'#{allowed_host}' IDENTIFIED BY " \
+            "'#{password}' WITH GRANT OPTION;\" | " \
+            "mysql -h 127.0.0.1 -u root --password=\"#{password}\""
     action :run
-    notifies :run, 'ruby_block[sql_query]', :immediately
+    not_if "echo \"SELECT count(*) from mysql.user where host='#{allowed_host}';\" | " \
+            "mysql -h 127.0.0.1 -u root --password=\"#{password}\" | grep -v count | grep 1"
   end
-  
-  ruby_block 'sql_query' do
-    block do
-      if node['mysql']['change_host'] != "1"
-        exec("GRANT ALL PRIVILEGES ON *.* TO root@'#{allowed_host}' IDENTIFIED BY '#{password}' WITH GRANT OPTION;")        
-      end
-    end
-    action :nothing    
-  end  
 end

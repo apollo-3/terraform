@@ -1,14 +1,13 @@
-require 'io/console'
 load 'config/config.rb'
 
 ENV['CONFIG_FOLDER']  = 'config'
 ENV['TERRAFORM_LINK'] = $config['terraform_link']
 ENV['TMP_DIR']        = $config['tmp_dir']
 ENV['TERRAFORM_FILE'] = $config['terraform_file']
-ENV['CHEF_REPO']    = $config['chef_repo']
+ENV['CHEF_REPO']      = $config['chef_repo']
 
-ENV['TF_SECRET_FILE']    = "#{ENV['CONFIG_FOLDER']}/secret.tfvars"
-ENV['TF_CONFIG_FILE']    = "#{ENV['CONFIG_FOLDER']}/config.tfvars"
+ENV['TF_SECRET_FILE'] = "#{ENV['CONFIG_FOLDER']}/secret.tfvars"
+ENV['TF_CONFIG_FILE'] = "#{ENV['CONFIG_FOLDER']}/config.tfvars"
 
 ADMIN_KEY             = $config['admin_key']
 VALIDATOR_KEY         = $config['validator_key']
@@ -41,6 +40,11 @@ namespace :terraform do
   desc "Plan terraform"
   task :plan do
     system('terraform plan -var-file="$TF_SECRET_FILE" -var-file="$TF_CONFIG_FILE"')
+  end
+
+  desc "Destroy terraform"
+  task :destroy do
+    system('terraform destroy -var-file="$TF_SECRET_FILE" -var-file="$TF_CONFIG_FILE"')
   end
 end
 
