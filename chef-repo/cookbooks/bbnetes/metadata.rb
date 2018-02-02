@@ -1,12 +1,13 @@
-name 'my_db'
-maintainer 'The Authors'
+name 'bbnetes'
+maintainer 'Andrei'
 maintainer_email 'you@example.com'
 license 'All Rights Reserved'
-description 'Installs/Configures my_db'
-long_description 'Installs/Configures my_db'
+description 'Installs/Configures bbnetes system'
+long_description 'Installs/Configures bbnetes system'
 version '0.1.0'
 chef_version '>= 12.1' if respond_to?(:chef_version)
 depends 'mysql', '~> 8.0'
+depends 'dependencies', '~> 0.1.0'
 
 # The `issues_url` points to the location where issues for this cookbook are
 # tracked.  A `View Issues` link will be displayed on this cookbook's page when

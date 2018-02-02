@@ -4,5 +4,8 @@ $config = {
   'validator_key'  => 'validator.pem',
   'chef_repo'      => 'chef-repo',
   'terraform_file' => 'terraform.zip',
-  'tmp_dir'        => '/tmp'
+  'tmp_dir'        => '/tmp',
+  'ssh_user'       => 'centos',
+  'ssh_key'        => 'research.pem',
+  'ssh_opts'       => '-o StrictHostKeyChecking=no'
 }

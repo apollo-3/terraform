@@ -5,7 +5,8 @@
   "json_class": "Chef::Environment",
   "description": "Production environment",
   "cookbook_versions": {
-    "mysql": "= 8.5.1"
+    "mysql": "= 8.5.1",
+    "bbnetes": "= 0.1.0"
   },
   "chef_type": "environment"
 }

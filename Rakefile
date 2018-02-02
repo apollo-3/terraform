@@ -5,6 +5,9 @@ ENV['TERRAFORM_LINK'] = $config['terraform_link']
 ENV['TMP_DIR']        = $config['tmp_dir']
 ENV['TERRAFORM_FILE'] = $config['terraform_file']
 ENV['CHEF_REPO']      = $config['chef_repo']
+ENV['SSH_USER']       = $config['ssh_user']
+ENV['SSH_KEY']        = $config['ssh_key']
+ENV['SSH_OPTS']       = $config['ssh_opts']
 
 ENV['TF_SECRET_FILE'] = "#{ENV['CONFIG_FOLDER']}/secret.tfvars"
 ENV['TF_CONFIG_FILE'] = "#{ENV['CONFIG_FOLDER']}/config.tfvars"
@@ -14,6 +17,15 @@ VALIDATOR_KEY         = $config['validator_key']
 
 def install_packages
   system("yum install -y unzip wget")
+end
+
+def get_terraform_output
+  {
+    'chef_server_ip'  => `terraform output chef-server-ip`.chomp,
+    'chef_server_dns' => `terraform output chef-server-private-dns`.chomp,
+    'test_db_ip'  => `terraform output test-db-ip`.chomp,
+    'test_db_dns' => `terraform output test-db-private-dns`.chomp
+  }
 end
 
 namespace :terraform do
@@ -49,14 +61,34 @@ namespace :terraform do
 end
 
 namespace :chef do
- task :prepare do
-   chef_server_ip  = `terraform output chef-server-ip`.chomp
-   chef_server_dns = `terraform output chef-server-private-dns`.chomp
-   system("ssh -i ./research.pem centos@#{chef_server_ip} \"sudo cp /root/#{ADMIN_KEY} /tmp\"")
-   system("ssh -i ./research.pem centos@#{chef_server_ip} \"sudo cp /root/#{VALIDATOR_KEY} /tmp\"")
-   system("scp -i ./research.pem centos@#{chef_server_ip}:/tmp/#{ADMIN_KEY} ./$CHEF_REPO/.chef")
-   system("scp -i ./research.pem centos@#{chef_server_ip}:/tmp/#{VALIDATOR_KEY} ./$CHEF_REPO/.chef")
-   system("echo \"#{chef_server_ip} #{chef_server_dns}\" >> /etc/hosts")
-   system("sed -i \"s/\\(chef_server_url *'https:\\/\\/\\)\\(.*\\)\\(\\/organizations\\/myorg'\\)/\\1#{chef_server_dns}\\3/g\" $CHEF_REPO/.chef/knife.rb")
- end
+  desc "Prepare chef"
+  task :prepare do
+    output = get_terraform_output
+    chef_server_ip  = output['chef_server_ip']
+    chef_server_dns = output['chef_server_dns']
+    test_db_ip  = output['test_db_ip']
+    test_db_dns = output['test_db_dns']
+
+    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} \"sudo cp /root/#{ADMIN_KEY} /tmp\"")
+    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} \"sudo cp /root/#{VALIDATOR_KEY} /tmp\"")
+    system("scp $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip}:/tmp/#{ADMIN_KEY} ./$CHEF_REPO/.chef")
+    system("scp $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip}:/tmp/#{VALIDATOR_KEY} ./$CHEF_REPO/.chef")
+    system("echo \"#{chef_server_ip} #{chef_server_dns}\" >> /etc/hosts")
+    system("sed -i \"s/\\(chef_server_url *'https:\\/\\/\\)\\(.*\\)\\(\\/organizations\\/myorg'\\)/\\1#{chef_server_dns}\\3/g\" $CHEF_REPO/.chef/knife.rb")
+    system("cd $CHEF_REPO && knife ssl fetch")
+    system("cd $CHEF_REPO && knife bootstrap #{test_db_ip} -x $SSH_USER -i ../$SSH_KEY --sudo -N #{test_db_dns}")
+    system("cd $CHEF_REPO && knife node environment set #{test_db_dns} dev")
+    system("cd $CHEF_REPO && knife node run_list set #{test_db_dns} 'role[db]'")
+    system("cd $CHEF_REPO && knife environment from file environments/dev.json")
+    system("cd $CHEF_REPO && knife role from file roles/db.json")
+    system("cd $CHEF_REPO && knife cookbook upload -a")
+  end
+
+  desc "Chef provision"
+  task :provision do
+    output = get_terraform_output
+    test_db_ip  = output['test_db_ip']
+    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} \"sudo chef-client --runlist 'recipe[dependencies::db]'\"")
+    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} \"sudo chef-client\"")
+  end
 end

@@ -161,3 +161,9 @@ output "chef-server-ip" {
 output "chef-server-private-dns" {
   value = "${aws_instance.test-chef-server.private_dns}"
 }
+output "test-db-ip" {
+  value = "${aws_instance.test-db.public_ip}"
+}
+output "test-db-private-dns" {
+  value = "${aws_instance.test-db.private_dns}"
+}

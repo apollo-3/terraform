@@ -1,5 +1,0 @@
-default['mysql']['port']         = "3306"
-default['mysql']['version']      = "5.5"
-default['mysql']['root_pwd']     = "changeme"
-default['mysql']['service_name'] = "mysql"
-default['mysql']['repo']         = "http://repo.mysql.com/yum/mysql-#{default['mysql']['version']}-community/el/7/$basearch/"

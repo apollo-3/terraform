@@ -6,7 +6,7 @@
   "description": "Development environment",
   "cookbook_versions": {
     "mysql": "= 8.5.1",
-    "my_db": "= 0.1.0"
+    "bbnetes": "= 0.1.0"
   },
   "chef_type": "environment"
 }
