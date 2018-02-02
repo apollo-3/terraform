@@ -3,9 +3,6 @@
   "chef_type": "role",
   "json_class": "Chef::Role",
   "default_attributes": {
-    "mysql": {
-      "version": "5.5"
-    }
   },
   "description": "The role for a database",
   "run_list": [
