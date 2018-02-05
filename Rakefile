@@ -88,7 +88,9 @@ namespace :chef do
   task :provision do
     output = get_terraform_output
     test_db_ip  = output['test_db_ip']
+    test_db_dns = output['test_db_dns']
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} \"sudo chef-client --runlist 'recipe[dependencies::db]'\"")
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} \"sudo chef-client\"")
+    system("knife node run_list set #{test_db_dns} 'role[db]'")
   end
 end
