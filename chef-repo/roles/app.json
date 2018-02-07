@@ -1,16 +1,16 @@
 {
-  "name": "db",
+  "name": "app",
   "chef_type": "role",
   "json_class": "Chef::Role",
   "default_attributes": {
   },
-  "description": "The role for a database",
+  "description": "The role for an application",
   "run_list": [
   ],
   "env_run_lists" : {
     "prod" : [],
     "dev": [
-      "recipe[bbnetes::db]"
+      "recipe[bbnetes::app]"
     ]
   },
   "override_attributes": {

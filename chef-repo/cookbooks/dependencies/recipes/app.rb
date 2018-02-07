@@ -1,6 +1,6 @@
 #
 # Cookbook:: dependencies
-# Recipe:: db
+# Recipe:: app
 #
 # Copyright:: 2018, The Authors, All Rights Reserved.
 

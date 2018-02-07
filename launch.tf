@@ -169,6 +169,26 @@ resource "aws_instance" "test-db" {
   depends_on = ["aws_security_group.test-sg"]
 }
 
+resource "aws_instance" "test-app" {
+  ami                         = "${var.instance_ami}"
+  count                       = 1
+  instance_type               = "t2.micro"
+  key_name                    = "${var.instance_keypair}"
+  subnet_id                   = "${aws_subnet.test-subnet.id}"
+  associate_public_ip_address = true
+  vpc_security_group_ids      = ["${aws_security_group.test-sg.id}"]
+  tags {
+    Name                 = "test-app"
+    Application          = "chef-client"
+    AssetProtectionLevel = "${var.tag_AssetProtectionLevel}"
+    Brand                = "${var.tag_Brand}"
+    CostCenter           = "${var.tag_CostCenter}"
+    Team                 = "${var.tag_Team}"
+    Creator              = "${var.tag_Creator}"
+  }
+  depends_on = ["aws_security_group.test-sg"]
+}
+
 output "chef-server-ip" {
   value = "${aws_instance.test-chef-server.public_ip}"
 }
@@ -180,4 +200,10 @@ output "test-db-ip" {
 }
 output "test-db-private-dns" {
   value = "${aws_instance.test-db.private_dns}"
+}
+output "test-app-ip" {
+  value = "${aws_instance.test-app.public_ip}"
+}
+output "test-app-private-dns" {
+  value = "${aws_instance.test-app.private_dns}"
 }

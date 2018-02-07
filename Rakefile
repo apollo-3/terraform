@@ -24,7 +24,9 @@ def get_terraform_output
     'chef_server_ip'  => `terraform output chef-server-ip`.chomp,
     'chef_server_dns' => `terraform output chef-server-private-dns`.chomp,
     'test_db_ip'  => `terraform output test-db-ip`.chomp,
-    'test_db_dns' => `terraform output test-db-private-dns`.chomp
+    'test_db_dns' => `terraform output test-db-private-dns`.chomp,
+    'test_app_ip'  => `terraform output test-app-ip`.chomp,
+    'test_app_dns' => `terraform output test-app-private-dns`.chomp
   }
 end
 
@@ -68,6 +70,8 @@ namespace :chef do
     chef_server_dns = output['chef_server_dns']
     test_db_ip  = output['test_db_ip']
     test_db_dns = output['test_db_dns']
+    test_app_ip  = output['test_app_ip']
+    test_app_dns = output['test_app_dns']
 
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} \"sudo cp /root/#{ADMIN_KEY} /tmp\"")
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} \"sudo cp /root/#{VALIDATOR_KEY} /tmp\"")
@@ -76,11 +80,16 @@ namespace :chef do
     system("echo \"#{chef_server_ip} #{chef_server_dns}\" >> /etc/hosts")
     system("sed -i \"s/\\(chef_server_url *'https:\\/\\/\\)\\(.*\\)\\(\\/organizations\\/myorg'\\)/\\1#{chef_server_dns}\\3/g\" $CHEF_REPO/.chef/knife.rb")
     system("cd $CHEF_REPO && knife ssl fetch")
+
     system("cd $CHEF_REPO && knife bootstrap #{test_db_ip} -x $SSH_USER -i ../$SSH_KEY --sudo -N #{test_db_dns}")
     system("cd $CHEF_REPO && knife node environment set #{test_db_dns} dev")
+    system("cd $CHEF_REPO && knife bootstrap #{test_app_ip} -x $SSH_USER -i ../$SSH_KEY --sudo -N #{test_app_dns}")
+    system("cd $CHEF_REPO && knife node environment set #{test_app_dns} dev")
+
     system("cd $CHEF_REPO && knife node run_list set #{test_db_dns} 'role[db]'")
     system("cd $CHEF_REPO && knife environment from file environments/dev.json")
     system("cd $CHEF_REPO && knife role from file roles/db.json")
+    system("cd $CHEF_REPO && knife role from file roles/app.json")
     system("cd $CHEF_REPO && knife cookbook upload -a")
   end
 
@@ -89,8 +98,13 @@ namespace :chef do
     output = get_terraform_output
     test_db_ip  = output['test_db_ip']
     test_db_dns = output['test_db_dns']
+    test_app_ip  = output['test_app_ip']
+    test_app_dns = output['test_app_dns']
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} \"sudo chef-client --runlist 'recipe[dependencies::db]'\"")
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} \"sudo chef-client\"")
-    system("knife node run_list set #{test_db_dns} 'role[db]'")
+    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_app_ip} \"sudo chef-client --runlist 'recipe[dependencies::app]'\"")
+    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_app_ip} \"sudo chef-client\"")
+    system("cd $CHEF_REPO && knife node run_list set #{test_db_dns} 'role[db]'")
+    system("cd $CHEF_REPO && knife node run_list set #{test_app_dns} 'role[app]'")
   end
 end
