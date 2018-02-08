@@ -13,7 +13,7 @@ end
 action :match do
   converge_if_changed :allowed_host do
     user     = node['mysql']['user']
-    password = node['mysql']['root_pwd']
+    password = node['mysql']['pass']
 
     db = BBnetes::MySQL.new(node)
     db.run_query("GRANT ALL PRIVILEGES ON *.* TO " \

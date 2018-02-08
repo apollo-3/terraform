@@ -8,7 +8,6 @@ variable "sg_cidr" {}
 variable "sg_port_1" {}
 variable "sg_port_2" {}
 variable "sg_port_3" {}
-variable "sg_port_4" {}
 variable "instance_ami" {}
 variable "instance_type" {}
 variable "instance_keypair" {}
@@ -88,12 +87,6 @@ resource "aws_security_group" "test-sg" {
   ingress {
     from_port   = "${var.sg_port_3}"
     to_port     = "${var.sg_port_3}"
-    protocol    = "TCP"
-    cidr_blocks = ["${var.sg_cidr}"]
-  }
-  ingress {
-    from_port   = "${var.sg_port_4}"
-    to_port     = "${var.sg_port_4}"
     protocol    = "TCP"
     cidr_blocks = ["${var.sg_cidr}"]
   }

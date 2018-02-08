@@ -8,6 +8,7 @@ ENV['CHEF_REPO']      = $config['chef_repo']
 ENV['SSH_USER']       = $config['ssh_user']
 ENV['SSH_KEY']        = $config['ssh_key']
 ENV['SSH_OPTS']       = $config['ssh_opts']
+ENV['EDITOR']         = $config['editor']
 
 ENV['TF_SECRET_FILE'] = "#{ENV['CONFIG_FOLDER']}/secret.tfvars"
 ENV['TF_CONFIG_FILE'] = "#{ENV['CONFIG_FOLDER']}/config.tfvars"
@@ -23,10 +24,10 @@ def get_terraform_output
   {
     'chef_server_ip'  => `terraform output chef-server-ip`.chomp,
     'chef_server_dns' => `terraform output chef-server-private-dns`.chomp,
-    'test_db_ip'  => `terraform output test-db-ip`.chomp,
-    'test_db_dns' => `terraform output test-db-private-dns`.chomp,
-    'test_app_ip'  => `terraform output test-app-ip`.chomp,
-    'test_app_dns' => `terraform output test-app-private-dns`.chomp
+    'test_db_ip'      => `terraform output test-db-ip`.chomp,
+    'test_db_dns'     => `terraform output test-db-private-dns`.chomp,
+    'test_app_ip'     => `terraform output test-app-ip`.chomp,
+    'test_app_dns'    => `terraform output test-app-private-dns`.chomp
   }
 end
 
@@ -65,13 +66,13 @@ end
 namespace :chef do
   desc "Prepare chef"
   task :prepare do
-    output = get_terraform_output
+    output          = get_terraform_output
     chef_server_ip  = output['chef_server_ip']
     chef_server_dns = output['chef_server_dns']
-    test_db_ip  = output['test_db_ip']
-    test_db_dns = output['test_db_dns']
-    test_app_ip  = output['test_app_ip']
-    test_app_dns = output['test_app_dns']
+    test_db_ip      = output['test_db_ip']
+    test_db_dns     = output['test_db_dns']
+    test_app_ip     = output['test_app_ip']
+    test_app_dns    = output['test_app_dns']
 
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} \"sudo cp /root/#{ADMIN_KEY} /tmp\"")
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} \"sudo cp /root/#{VALIDATOR_KEY} /tmp\"")
@@ -90,14 +91,18 @@ namespace :chef do
     system("cd $CHEF_REPO && knife environment from file environments/dev.json")
     system("cd $CHEF_REPO && knife role from file roles/db.json")
     system("cd $CHEF_REPO && knife role from file roles/app.json")
+
+    system("cd $CHEF_REPO && export EDITOR=$EDITOR && knife data bag create db mysql")
+    system("cd $CHEF_REPO && export EDITOR=$EDITOR && knife data bag from file db mysql.json")
+
     system("cd $CHEF_REPO && knife cookbook upload -a")
   end
 
   desc "Chef provision"
   task :provision do
-    output = get_terraform_output
-    test_db_ip  = output['test_db_ip']
-    test_db_dns = output['test_db_dns']
+    output       = get_terraform_output
+    test_db_ip   = output['test_db_ip']
+    test_db_dns  = output['test_db_dns']
     test_app_ip  = output['test_app_ip']
     test_app_dns = output['test_app_dns']
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} \"sudo chef-client --runlist 'recipe[dependencies::db]'\"")

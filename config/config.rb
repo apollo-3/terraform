@@ -7,5 +7,6 @@ $config = {
   'tmp_dir'        => '/tmp',
   'ssh_user'       => 'centos',
   'ssh_key'        => 'research.pem',
-  'ssh_opts'       => '-o StrictHostKeyChecking=no'
+  'ssh_opts'       => '-o StrictHostKeyChecking=no',
+  'editor'         => '/bin/vi'
 }

@@ -1,6 +1,10 @@
 {
   "name": "dev",
   "default_attributes": {
+    "mysql": {
+      "port": "3306",
+      "user": "root"
+    }
   },
   "json_class": "Chef::Environment",
   "description": "Development environment",

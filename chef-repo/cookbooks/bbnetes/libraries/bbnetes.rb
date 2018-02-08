@@ -5,7 +5,7 @@ module BBnetes
        @host     = node['mysql']['host']
        @port     = node['mysql']['port']
        @user     = node['mysql']['user']
-       @password = node['mysql']['root_pwd']
+       @password = node['mysql']['pass']
        @client   = init_connection
     end
 
