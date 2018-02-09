@@ -39,3 +39,10 @@ tomcat_service 'tomcat' do
   env_vars [{'JAVA_OPTS' => java_opts.strip}]
   action :start
 end
+
+bbnetes_dns_record "app" do
+  hosted_zone node['dns']['zone']
+  aws_access_key aws_access_key
+  aws_secret_key aws_secret_key
+  action :create
+end

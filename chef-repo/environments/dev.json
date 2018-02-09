@@ -4,6 +4,9 @@
     "mysql": {
       "port": "3306",
       "user": "root"
+    },
+    "dns": {
+      "zone": "test.sandbox.expts.net"
     }
   },
   "json_class": "Chef::Environment",

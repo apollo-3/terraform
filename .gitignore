@@ -30,3 +30,5 @@ chef-repo/.zero-knife.rb
 chef-repo/Policyfile.lock.json
 chef-repo/.chef/*.pem
 chef-repo/.chef/trusted_certs
+
+chef-repo/data_bags/keys/aws.json

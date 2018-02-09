@@ -2,6 +2,8 @@ resource_name :bbnetes_db_user_config
 
 property :allowed_host, String, default: '%'
 
+default_action :match
+
 load_current_value do |desired|
   db = BBnetes::MySQL.new(node)
   result = db.run_query("SELECT host FROM mysql.user " \

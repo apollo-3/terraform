@@ -4,8 +4,12 @@
 #
 # Copyright:: 2018, The Authors, All Rights Reserved.
 
-dbg = search(:db, "id:mysql").first
-default.node['mysql']['pass'] = dbg['password']
+dbg_db   = search(:db, "id:mysql").first
+dbg_keys = search(:keys, "id:aws").first
+
+node.default['mysql']['pass'] = dbg_db['password']
+aws_access_key                = dbg_keys['aws_access_key']
+aws_secret_key                = dbg_keys['aws_secret_key']
 
 mysql_service "default" do
   port node['mysql']['port']
@@ -22,4 +26,11 @@ end
 bbnetes_db_table "table_#{node['mysql']['table']}" do
   table node['mysql']['table']
   action [:create]
+end
+
+bbnetes_dns_record "db" do
+  hosted_zone node['dns']['zone']
+  aws_access_key aws_access_key
+  aws_secret_key aws_secret_key
+  action :create
 end

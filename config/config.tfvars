@@ -4,6 +4,7 @@ sg_cidr = "185.63.117.0/29"
 sg_port_1 = 22
 sg_port_2 = 443
 sg_port_3 = 8080
+hosted_zone = "test.sandbox.expts.net"
 instance_ami = "ami-031b0f67"
 instance_type = "t2.small"
 instance_keypair = "research"

@@ -2,7 +2,7 @@ require 'mysql2'
 module BBnetes
   class MySQL
     def initialize node
-       @host     = node['mysql']['host']
+       @host     = '127.0.0.1'
        @port     = node['mysql']['port']
        @user     = node['mysql']['user']
        @password = node['mysql']['pass']

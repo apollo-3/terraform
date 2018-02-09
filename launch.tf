@@ -8,6 +8,7 @@ variable "sg_cidr" {}
 variable "sg_port_1" {}
 variable "sg_port_2" {}
 variable "sg_port_3" {}
+variable "hosted_zone" {}
 variable "instance_ami" {}
 variable "instance_type" {}
 variable "instance_keypair" {}
@@ -67,6 +68,11 @@ resource "aws_route_table" "test-route-table" {
 resource "aws_route_table_association" "associate_route_table" {
   subnet_id      = "${aws_subnet.test-subnet.id}"
   route_table_id = "${aws_route_table.test-route-table.id}"
+}
+
+resource "aws_route53_zone" "test-hosted-zone" {
+  name = "${var.hosted_zone}"
+  comment = "test hosted zone"
 }
 
 resource "aws_security_group" "test-sg" {

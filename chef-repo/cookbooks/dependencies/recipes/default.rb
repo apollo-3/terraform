@@ -15,3 +15,4 @@ node['db']['packages'].each do |pkg|
 end
 
 chef_gem 'mysql2'
+chef_gem 'aws-sdk'
