@@ -12,9 +12,9 @@ BBnetes::Helper.set_db_password_attribute(node)
 java_opts = BBnetes::Helper.build_java_opts_string(node)
 
 # Read aws credentials from a Data Bag
-dbg_keys = search(:keys, "id:aws").first
-aws_access_key                = dbg_keys['aws_access_key']
-aws_secret_key                = dbg_keys['aws_secret_key']
+dbg_keys        = search(:keys, "id:aws").first
+aws_access_key  = dbg_keys['aws_access_key']
+aws_secret_key  = dbg_keys['aws_secret_key']
 
 include_recipe 'java'
 
