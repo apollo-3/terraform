@@ -8,17 +8,18 @@ module BBnetes
        @password = node['mysql']['pass']
        @client   = init_connection
     end
+    # Run MYSQL query
+    def run_query query
+      @client.query(query)
+    end
 
+    private
+    # Initialize MYSQL client
     def init_connection
       @client = Mysql2::Client.new(:host     => @host,
                                    :port     => @port,
                                    :username => @user,
                                    :password => @password)
-    end
-
-    public
-    def run_query query
-      @client.query(query)
     end
   end
 end

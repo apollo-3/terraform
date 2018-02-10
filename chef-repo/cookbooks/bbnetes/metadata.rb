@@ -1,6 +1,6 @@
 name 'bbnetes'
 maintainer 'Andrei'
-maintainer_email 'you@example.com'
+maintainer_email 'test@example.com'
 license 'All Rights Reserved'
 description 'Installs/Configures bbnetes system'
 long_description 'Installs/Configures bbnetes system'

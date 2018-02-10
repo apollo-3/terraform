@@ -1,53 +1,6 @@
 require 'aws-sdk'
 
 module BBnetes
-  class AWS
-    def initialize(aws_access_key,
-                   aws_secret_key,
-                   region,
-                   node)
-      @aws_access_key = aws_access_key
-      @aws_secret_key    = aws_secret_key
-      @region            = region
-      @credentials       = Aws::Credentials.new(@aws_access_key,
-                                                @aws_secret_key)
-      @node              = node
-    end
-  end
-
-  class EC2 < AWS
-    def initialize(aws_access_key,
-                   aws_secret_key,
-                   region,
-                   node)
-      @ec2 = nil
-      super(aws_access_key, aws_secret_key, region, node)
-      begin
-        @ec2 = Aws::EC2::Client.new(credentials: @credentials,
-                                    region:      @region)
-      rescue
-        Chef::Log.error("failed to create ec2 client")
-      end
-    end
-
-    def get_node_public_ip
-      private_ip = ""
-      addrs = @node[:network][:interfaces][:eth0][:addresses]
-      addrs.each do |addr, val|
-        if addr.match(/192.*/)
-          private_ip = addr
-          break
-        end
-      end
-
-      resp = @ec2.describe_instances({filters: [{
-          name:   'network-interface.addresses.private-ip-address',
-          values: [private_ip]}]})
-      public_ip = resp.reservations[0].instances[0].public_ip_address
-    end
-
-  end
-
   class DNS < AWS
     def initialize(aws_access_key,
                    aws_secret_key,
@@ -63,6 +16,7 @@ module BBnetes
       end
     end
 
+    # Create Route53 DNS record
     def create_dns_record(record, public_ip, hosted_zone)
       fqdn = "#{record}.#{hosted_zone}."
       zone_id = get_hosted_zone_id_by_name(hosted_zone)
@@ -89,6 +43,7 @@ module BBnetes
       add_dns_name("#{record}.#{hosted_zone}")
     end
 
+    # Delete Route53 DNS record
     def delete_dns_record(record, hosted_zone)
       fqdn = "#{record}.#{hosted_zone}."
       zone_id = get_hosted_zone_id_by_name(hosted_zone)
@@ -107,20 +62,24 @@ module BBnetes
       del_dns_name
     end
 
+    # Check if A record already exist
     def record_exist?(dns_record, hosted_zone)
       list = get_record_by_name(dns_record, hosted_zone)
       list.any? ? true : false
     end
 
     private
+    # Sets node attribute with a new Route53 DNS name
     def add_dns_name fqdn
       @node.default['custom_dns']['name'] = fqdn
     end
 
+    # Deletes node attribute with Route53 DNS name
     def del_dns_name
      @node.default['custom_dns'].delete('name')
     end
 
+    # Get the list of dns resources in a hosted zone
     def list_zone_records(hosted_zone, fqdn = "NA")
       zone_id   = get_hosted_zone_id_by_name(hosted_zone)
       opts      = {hosted_zone_id: zone_id,
@@ -133,12 +92,14 @@ module BBnetes
       resp.resource_record_sets
     end
 
+    # Get dns record by dns name in array
     def get_record_by_name(dns_name, hosted_zone)
       fqdn = "#{dns_name}.#{hosted_zone}."
       list = list_zone_records(hosted_zone)
       list.select { |record| record.name == fqdn }
     end
 
+    # Get hosted zone id by name
     def get_hosted_zone_id_by_name(hosted_zone)
       resp = @r53.list_hosted_zones()
       out = resp.hosted_zones.select { |zone| zone.name == "#{hosted_zone}." }

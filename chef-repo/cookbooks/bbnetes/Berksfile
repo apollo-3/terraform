@@ -2,3 +2,9 @@
 source 'https://supermarket.chef.io'
 
 metadata
+
+group :external do
+  cookbook "java", "~> 1.50.0"
+  cookbook "mysql", "~> 8.5.1"
+  cookbook "tomcat", "~> 3.0.0"
+end

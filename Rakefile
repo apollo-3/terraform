@@ -16,10 +16,12 @@ ENV['TF_CONFIG_FILE'] = "#{ENV['CONFIG_FOLDER']}/config.tfvars"
 ADMIN_KEY             = $config['admin_key']
 VALIDATOR_KEY         = $config['validator_key']
 
+# Install System Dependencies
 def install_packages
   system("yum install -y unzip wget")
 end
 
+# Get output parameters from terraform
 def get_terraform_output
   {
     'chef_server_ip'  => `terraform output chef-server-ip`.chomp,
@@ -32,6 +34,8 @@ def get_terraform_output
 end
 
 namespace :terraform do
+  tf_options = "-var-file=\"$TF_SECRET_FILE\" -var-file=\"$TF_CONFIG_FILE\""
+
   run_tasks = ["install", "apply"]
   desc "Run terraform"
   task :run do
@@ -51,17 +55,17 @@ namespace :terraform do
 
   desc "Apply terraform"
   task :apply do
-    system('terraform apply -var-file="$TF_SECRET_FILE" -var-file="$TF_CONFIG_FILE"')
+    system("terraform apply #{tf_options}")
   end
 
   desc "Plan terraform"
   task :plan do
-    system('terraform plan -var-file="$TF_SECRET_FILE" -var-file="$TF_CONFIG_FILE"')
+    system("terraform plan #{tf_options}")
   end
 
   desc "Destroy terraform"
   task :destroy do
-    system('terraform destroy -var-file="$TF_SECRET_FILE" -var-file="$TF_CONFIG_FILE"')
+    system("terraform destroy #{tf_options}")
   end
 end
 
@@ -76,6 +80,7 @@ namespace :chef do
     test_app_ip     = output['test_app_ip']
     test_app_dns    = output['test_app_dns']
 
+    # Download all keys from chef-server & configure knife
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} " \
            "\"sudo cp /root/#{ADMIN_KEY} /tmp\"")
     system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip} " \
@@ -85,21 +90,25 @@ namespace :chef do
     system("scp $SSH_OPTS -i $SSH_KEY $SSH_USER@#{chef_server_ip}" \
            ":/tmp/#{VALIDATOR_KEY} ./$CHEF_REPO/.chef")
     system("echo \"#{chef_server_ip} #{chef_server_dns}\" >> /etc/hosts")
-    system("sed -i \"s/\\(chef_server_url *'https:\\/\\/\\)\\(.*\\)\\(\\/organizations\\/myorg'\\)/\\1#{chef_server_dns}\\3/g\" $CHEF_REPO/.chef/knife.rb")
+    system("sed -i \"s/\\(chef_server_url *'https:\\/\\/\\)\\(.*\\)\\(\\/" \
+           "organizations\\/myorg'\\)/\\1#{chef_server_dns}\\3/g\" " \
+           "$CHEF_REPO/.chef/knife.rb")
     system("cd $CHEF_REPO && knife ssl fetch")
 
-    system("cd $CHEF_REPO && knife bootstrap #{test_db_ip} " \
-           "-x $SSH_USER -i ../$SSH_KEY --sudo -N #{test_db_dns}")
-    system("cd $CHEF_REPO && knife node environment set #{test_db_dns} dev")
-    system("cd $CHEF_REPO && knife bootstrap #{test_app_ip} " \
-           "-x $SSH_USER -i ../$SSH_KEY --sudo -N #{test_app_dns}")
-    system("cd $CHEF_REPO && knife node environment set #{test_app_dns} dev")
+    # Bootstrap clients & upload roles
+    clients = [{'ip' => test_db_ip, 'dns' => test_db_dns, 'role' => 'db'},
+               {'ip' => test_app_ip, 'dns' => test_app_dns, 'role' => 'app'}]
+    clients.each do |client|
+      system("cd $CHEF_REPO && knife bootstrap #{client['ip']} " \
+             "-x $SSH_USER -i ../$SSH_KEY --sudo -N #{client['dns']}")
+      system("cd $CHEF_REPO && knife node environment set #{client['dns']} dev")
+      system("cd $CHEF_REPO && knife role from file roles/#{client['role']}.json")
+    end
 
-    system("cd $CHEF_REPO && knife node run_list set #{test_db_dns} 'role[db]'")
+    # Upload environment files
     system("cd $CHEF_REPO && knife environment from file environments/dev.json")
-    system("cd $CHEF_REPO && knife role from file roles/db.json")
-    system("cd $CHEF_REPO && knife role from file roles/app.json")
 
+    # Create Data Bags
     data_bags = [{'bag' => 'db',   'id' => 'mysql'},
                  {'bag' => 'keys', 'id' => 'aws'}]
     data_bags.each do |data_bag|
@@ -109,6 +118,7 @@ namespace :chef do
              "knife data bag from file #{data_bag['bag']} #{data_bag['id']}.json")
     end
 
+    # Upload cookbooks
     system("cd $CHEF_REPO && knife cookbook upload -a")
   end
 
@@ -119,15 +129,24 @@ namespace :chef do
     test_db_dns  = output['test_db_dns']
     test_app_ip  = output['test_app_ip']
     test_app_dns = output['test_app_dns']
-    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} " \
-           "\"sudo chef-client --runlist 'recipe[dependencies::db]'\"")
-    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_db_ip} " \
-           "\"sudo chef-client\"")
-    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_app_ip} " \
-           "\"sudo chef-client --runlist 'recipe[dependencies::app]'\"")
-    system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{test_app_ip} " \
-           "\"sudo chef-client\"")
-    system("cd $CHEF_REPO && knife node run_list set #{test_db_dns} 'role[db]'")
-    system("cd $CHEF_REPO && knife node run_list set #{test_app_dns} 'role[app]'")
+
+    # Run dependency recipes on clients & set node roles
+    clients = [{'ip'     => test_db_ip,
+                'recipe' => 'dependencies::db',
+                'role'   => 'db',
+                'dns'    => test_db_dns},
+               {'ip'     => test_app_ip,
+                'recipe' => 'dependencies::app',
+                'role'   => 'app',
+                'dns'    => test_app_dns}
+              ]
+    clients.each do |client|
+      system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{client['ip']} " \
+             "\"sudo chef-client --runlist 'recipe[#{client['recipe']}]'\"")
+      system("cd $CHEF_REPO && knife node run_list set #{client['dns']} " \
+             "'role[#{client['role']}]'")
+      system("ssh $SSH_OPTS -i $SSH_KEY $SSH_USER@#{client['ip']} " \
+             "\"sudo chef-client\"")
+    end
   end
 end
