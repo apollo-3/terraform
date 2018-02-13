@@ -2,10 +2,10 @@
 driver:
   name: ec2
   aws_ssh_key_id: research
-  security_group_ids: ["sg-e6dc818e"]
+  security_group_ids: ["sg-3215495a"]
   region: eu-west-2
-  availability_zone: eu-west-2b
-  subnet_id: subnet-5ab59217
+  availability_zone: eu-west-2a
+  subnet_id: subnet-8db4a2f6
   instance_type: t2.small
   associate_public_ip: true
   interface: dns
@@ -38,6 +38,7 @@ suites:
   - name: default
     run_list:
       - recipe[dependencies::default]
+      - recipe[bbnetes::db]
     verifier:
       inspec_tests:
         - test/smoke/default

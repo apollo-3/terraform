@@ -32,3 +32,8 @@ chef-repo/.chef/*.pem
 chef-repo/.chef/trusted_certs
 
 chef-repo/data_bags/keys/aws.json
+
+**/.delivery/
+**/Berksfile.lock
+chef-repo/cookbooks/bbnetes/.kitchen/
+chef-repo/cookbooks/dependencies/.kitchen/
