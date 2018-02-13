@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-source 'https://supermarket.chef.io'
+source "https://supermarket.chef.io"
+source chef_repo: "/opt/learn/terraform/chef-repo"
 
 metadata
 
@@ -7,4 +8,8 @@ group :external do
   cookbook "java", "~> 1.50.0"
   cookbook "mysql", "~> 8.5.1"
   cookbook "tomcat", "~> 3.0.0"
+end
+
+group :internal do
+  cookbook "dependencies", "~> 0.1.0"
 end

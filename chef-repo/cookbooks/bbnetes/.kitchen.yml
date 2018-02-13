@@ -1,25 +1,43 @@
 ---
 driver:
-  name: vagrant
+  name: ec2
+  aws_ssh_key_id: research
+  security_group_ids: ["sg-e6dc818e"]
+  region: eu-west-2
+  availability_zone: eu-west-2b
+  subnet_id: subnet-5ab59217
+  instance_type: t2.small
+  associate_public_ip: true
+  interface: dns
+  tags: {"Name": "test-kitchen"}
+
+platforms:
+  - name: centos-7
+    driver:
+      image_id: ami-031b0f67
+    transport:
+      username: centos
+
+transport:
+  ssh_key: /opt/learn/terraform/research.pem
+  username: centos
 
 provisioner:
   name: chef_zero
-  # You may wish to disable always updating cookbooks in CI or other testing environments.
-  # For example:
-  #   always_update_cookbooks: <%= !ENV['CI'] %>
   always_update_cookbooks: true
+  attributes: {
+  }
+  data_bags_path: /opt/learn/terraform/chef-repo/data_bags
+  environments_path: /opt/learn/terraform/chef-repo/environments
+  roles_path: /opt/learn/terraform/chef-repo/roles
 
 verifier:
   name: inspec
 
-platforms:
-  - name: ubuntu-16.04
-  - name: centos-7
-
 suites:
   - name: default
     run_list:
-      - recipe[bbnetes::default]
+      - recipe[dependencies::default]
     verifier:
       inspec_tests:
         - test/smoke/default
